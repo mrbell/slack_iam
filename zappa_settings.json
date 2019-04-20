@@ -1,0 +1,29 @@
+{
+  "prod": {
+    "app_function": "iam.app",
+    "aws_region": "us-east-1",
+    "exclude": [
+      "__pycache__",
+      ".git/*",
+      ".gitignore",
+      ".python-version",
+      "LICENSE",
+      "README.md",
+      "requirements.txt",
+      "zappa_settings.json",
+      ".vscode/*"
+    ],
+    "events": [{
+        "function": "iam.daily_update", 
+        "expressions": ["cron(0 14 ? * MON-FRI *)"] 
+    }],
+    "keep_warm": true,
+    "keep_warm_expression": "rate(5 minutes)",
+    "memory_size": 128,
+    "profile_name": "default",
+    "project_name": "slack-iam",
+    "runtime": "python3.6",
+    "s3_bucket": "slack-iam",
+    "timeout_seconds": 30,
+  }
+}
