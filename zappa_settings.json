@@ -20,10 +20,10 @@
     "keep_warm": true,
     "keep_warm_expression": "rate(5 minutes)",
     "memory_size": 128,
-    "profile_name": "default",
+    "profile_name": "016880155596_Dev3-NonProd",
     "project_name": "slack-iam",
     "runtime": "python3.6",
-    "s3_bucket": "slack-iam",
+    "s3_bucket": "agerodsa-slack-iam",
     "timeout_seconds": 30,
   }
 }

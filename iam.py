@@ -14,6 +14,7 @@ import requests
 from datetime import datetime
 import math
 import parsedatetime as pdt
+from pytz import timezone
 
 from flask import abort, Flask, jsonify, request
 
@@ -78,7 +79,13 @@ def parse_options(command_text):
 
 def parse_date(date_str):
     cal = pdt.Calendar()
-    parsed_date_result = cal.parseDT(date_str)
+    
+    eastern = timezone('US/Eastern')
+    utc = timezone('UTC')
+    source_time = utc.localize(datetime.utcnow()).astimezone(eastern)
+
+    parsed_date_result = cal.parseDT(date_str, sourceTime=source_time)
+
     if parsed_date_result[1] > 0:
         parsed_date = parsed_date_result[0]
     else:
