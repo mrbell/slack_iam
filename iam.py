@@ -11,10 +11,13 @@ import json
 import logging
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import math
 import parsedatetime as pdt
 from pytz import timezone
+from zappa.async import task
+from traceback import format_exc
+import time
 
 from flask import abort, Flask, jsonify, request
 
@@ -27,12 +30,14 @@ help_text = "Use this command to set or check your status."
 help_attachment_text = (
     "Use `/iam [subcommand]` with one of the following:\n"
     "\t -`wfh` to set a working from home status or `ooo` " +
-    "to set out of office status followed by a time (defaults to today). \n" + 
+    "to set out of office status followed by a time (defaults to today). \n" +
+    "\t\t multiple dates can be given using 'and' or a range using 'through' \n" + 
+    "\t\t and dates can be given in a range of natural formats, e.g. tomorrow, wednesday, 2019-03-12, etc.)"
     "\t -`in` to set your status to in office (to override an earlier OOO or WFH. \n" + 
     "\t -`history` to check your recent history, \n" +
     "\t -`today` to see everyone's status for the current day, \n" + 
     "\t -`schedule` to check scheduled OOO or WFH status. \n" + 
-    "e.g. `/iam wfh tomorrow`, `/iam ooo 4/13/2019`, or `/iam schedule`"
+    "e.g. `/iam wfh tomorrow and friday`, `/iam ooo 4/13/2019`, or `/iam schedule`"
 )
 
 # Various tokens that we will need
@@ -46,6 +51,7 @@ webhook_url = os.environ['SLACK_WEBHOOK_URL']
 
 app = Flask(__name__)
 
+through_words = [' through ', ' to ', ' thru ']
 
 class InvalidDate(Exception):
     pass
@@ -92,7 +98,7 @@ def parse_date(date_str):
         parsed_date = None
 
     if parsed_date is None:
-        raise InvalidDate('Could not parse the given date')
+        raise InvalidDate(f'Could not parse the given date {date_str}')
     else:
         return str(parsed_date.date())
 
@@ -146,13 +152,51 @@ def get_history(user_id):
     return '\n'.join(past_statuses)
 
 
+def parse_date_options(opts):
+
+    if ' and ' in opts.lower():
+
+        date_opts = opts.lower().split(' and ')
+
+    elif any(tw in opts.lower() for tw in through_words):
+
+        for tw in through_words:
+            if tw in opts.lower():
+                split_word = tw 
+                break
+
+        end_dates = opts.lower().split(split_word)
+
+        assert len(end_dates) == 2, "Must provide a start and end date, e.g. 'monday through friday'"
+
+        start_date, end_date = (
+            datetime.strptime(parse_date(end_dates[0]), '%Y-%m-%d'), 
+            datetime.strptime(parse_date(end_dates[1]), '%Y-%m-%d')
+        )
+
+        assert start_date <= end_date, "First date in range must come before the end date."
+
+        dates = []
+        
+        while start_date <= end_date:
+            dates.append(str(start_date.date()))
+            start_date = start_date + timedelta(days=1)
+        
+        date_opts = dates
+
+    else:
+        date_opts = [opts]
+
+    return [parse_date(date_opt) for date_opt in date_opts]
+
+
 def get_schedule():
     log_table = dynamo.Table(log_table_name)
     response = log_table.scan()
     all_statuses = response['Items']
 
     start_date = parse_date('today')
-    end_date = parse_date('two weeks from now')
+    end_date = parse_date('a month from now')
 
     future_statuses = sorted([
         f"{stat['date']} - {stat['user_name']} - {stat['status'].upper()}" 
@@ -163,6 +207,57 @@ def get_schedule():
     ])
 
     return '\n'.join(future_statuses)
+
+
+@task
+def log_time_task(response_url, subcommand, options, user_id, user_name):
+
+    time.sleep(3)
+
+    try:
+        if len(options) == 0:
+            options = 'today'
+        
+        the_dates = parse_date_options(options)
+
+        for the_date in the_dates:
+            submit_status(user_id, the_date, subcommand, user_name)
+
+        if len(the_dates) == 1: 
+        
+            if the_date > parse_date('today'):
+                response_text = f'{user_name} will be {subcommand.upper()} on {the_date}.'
+            elif the_date == parse_date('today'):
+                response_text = f'{user_name} is {subcommand.upper()} today.'
+            else:
+                response_text = f'{user_name} was {subcommand.upper()} on {the_date}.'
+
+        elif ' and ' in options.lower():
+
+            response_text = f'{user_name} is {subcommand.upper()} on '
+            response_text += ' and '.join(the_dates)
+
+        elif any(tw in options.lower() for tw in through_words):
+            response_text = f'{user_name} is {subcommand.upper()} on {the_dates[0]} through {the_dates[-1]}'
+        else:
+            raise Exception("Something went wrong!")
+    except:
+        requests.post(response_url,
+            json={
+                'response_type': 'ephemeral',
+                'text': 'Oops, something went wrong!',
+                'attachments': [ 
+                    dict(text=format_exc()), 
+                ] 
+            }
+        )
+
+    requests.post(response_url, 
+        json={
+            'response_type': 'in_channel',
+            'text': response_text
+        }
+    )
 
 
 @app.route('/iam', methods=['POST'])
@@ -179,23 +274,13 @@ def iam():
     user_name = request.form['user_name']
 
     if subcommand == 'wfh' or subcommand == 'ooo' or subcommand == 'in':
-        if len(options) == 0:
-           the_date = parse_date('today')
-        else:
-           the_date = parse_date(options)
 
-        submit_status(user_id, the_date, subcommand, user_name)
-        
-        if the_date > parse_date('today'):
-            response_text = f'{user_name} will be {subcommand.upper()} on {the_date}.'
-        elif the_date == parse_date('today'):
-            response_text = f'{user_name} is {subcommand.upper()} today.'
-        else:
-            response_text = f'{user_name} was {subcommand.upper()} on {the_date}.'
+        # Use an async response just to prevent the command getting written to the channel for all to see
+        log_time_task(request.form['response_url'], subcommand, options, user_id, user_name)
 
         return jsonify(
-            response_type='in_channel',
-            text=response_text
+            response_type='ephemeral',
+            text="logging..."
         )
 
     elif subcommand == 'help':
@@ -207,7 +292,16 @@ def iam():
         )
 
     elif subcommand == 'schedule':
-        future_statuses = get_schedule()
+        try:
+            future_statuses = get_schedule()
+        except:
+            return jsonify(
+                response_type='ephemeral',
+                text="Oops! Something went wrong!",
+                attachments=[
+                    dict(text=format_exc()),
+                ]
+            )
         
         return jsonify(
             response_type='in_channel',
@@ -218,9 +312,18 @@ def iam():
         ) 
 
     elif subcommand == 'today':
-        todays_statuses = get_todays_status()
-        if len(todays_statuses) == 0:
-            todays_statuses = 'Everyone is planning to be in office today.'
+        try:
+            todays_statuses = get_todays_status()
+            if len(todays_statuses) == 0:
+                todays_statuses = 'Everyone is planning to be in office today.'
+        except:
+            return jsonify(
+                response_type='ephemeral',
+                text="Oops! Something went wrong!",
+                attachments=[
+                    dict(text=format_exc()),
+                ]
+            )
         return jsonify(
             response_type='in_channel',
             text="Today's WFH/OOO statuses:",
@@ -230,7 +333,16 @@ def iam():
         )
 
     elif subcommand == 'history':
-        past_statuses = get_history(user_id)
+        try:
+            past_statuses = get_history(user_id)
+        except:
+            return jsonify(
+                response_type='ephemeral',
+                text="Oops! Something went wrong!",
+                attachments=[
+                    dict(text=format_exc()),
+                ]
+            ) 
         return jsonify(
             text="My WFH/OOO status from the past month:",
             attachments=[
