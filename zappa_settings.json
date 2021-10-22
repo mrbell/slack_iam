@@ -11,7 +11,9 @@
       "README.md",
       "requirements.txt",
       "zappa_settings.json",
-      ".vscode/*"
+      ".vscode/*",
+      "Pipfile",
+      "Pipfile.lock"
     ],
     "events": [{
         "function": "iam.daily_update", 
@@ -20,10 +22,12 @@
     "keep_warm": true,
     "keep_warm_expression": "rate(5 minutes)",
     "memory_size": 128,
-    "profile_name": "016880155596_Dev3-NonProd",
+    "profile_name": "default",
     "project_name": "slack-iam",
     "runtime": "python3.6",
-    "s3_bucket": "agerodsa-slack-iam",
+    "s3_bucket": "titan-slack-iam",
     "timeout_seconds": 30,
+    "manage_roles": false,
+    "role_arn": "arn:aws:iam::150114888524:role/slack-iam-prod-ZappaLambdaExecutionRole"
   }
 }

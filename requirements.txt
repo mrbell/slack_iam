@@ -1,6 +1,0 @@
-requests
-flask
-boto3
-parsedatetime
-zappa
-pytz
