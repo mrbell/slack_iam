@@ -24,7 +24,7 @@
     "memory_size": 128,
     "profile_name": "default",
     "project_name": "slack-iam",
-    "runtime": "python3.6",
+    "runtime": "python3.8",
     "s3_bucket": "titan-slack-iam",
     "timeout_seconds": 30,
     "manage_roles": false,
