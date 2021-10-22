@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 import math
 import parsedatetime as pdt
 from pytz import timezone
-from zappa.async import task
+from zappa.asynchronous import task
 from traceback import format_exc
 import time
 
