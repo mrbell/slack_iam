@@ -32,7 +32,7 @@ help_attachment_text = (
     "\t -`wfh` to set a working from home status or `ooo` " +
     "to set out of office status followed by a time (defaults to today). \n" +
     "\t\t multiple dates can be given using 'and' or a range using 'through' \n" + 
-    "\t\t and dates can be given in a range of natural formats, e.g. tomorrow, wednesday, 2019-03-12, etc.)"
+    "\t\t and dates can be given in a range of natural formats, e.g. tomorrow, wednesday, 2019-03-12, etc.)\n"
     "\t -`in` to set your status to in office (to override an earlier OOO or WFH. \n" + 
     "\t -`history` to check your recent history, \n" +
     "\t -`today` to see everyone's status for the current day, \n" + 
