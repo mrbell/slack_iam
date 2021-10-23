@@ -28,12 +28,14 @@ Resources
 
 help_text = "Use this command to set or check your status."
 help_attachment_text = (
-    "Use `/iam [subcommand]` with one of the following:\n"
-    "\t -`wfh` to set a working from home status or `ooo` " +
-    "to set out of office status followed by a time (defaults to today). \n" +
-    "\t\t multiple dates can be given using 'and' or a range using 'through' \n" + 
-    "\t\t and dates can be given in a range of natural formats, e.g. tomorrow, wednesday, 2019-03-12, etc.)\n"
-    "\t -`in` to set your status to in office (to override an earlier OOO or WFH. \n" + 
+    "Use `/iam [subcommand]` with one of the following subcommands:\n"
+    "\t -`wfh` to set a working from home status or `ooo` to set out of office status \n" + 
+    "\t  followed by a time (defaults to today). \n" +
+    "\t\t Multiple dates can be given using 'and' or a range using 'through' \n" + 
+    "\t\t e.g. '2021-10-25 and 2021-10-26' or '2021-10-25 through 2021-10-29'\n" +
+    "\t\t Dates can be provided in a variety of natural formats, \n" + 
+    "\t\t e.g. tomorrow, wednesday, 2019-03-12, etc.\n"
+    "\t -`in` to set your status to in office (to override an earlier OOO or WFH).\n" + 
     "\t -`history` to check your recent history, \n" +
     "\t -`today` to see everyone's status for the current day, \n" + 
     "\t -`schedule` to check scheduled OOO or WFH status. \n" + 
