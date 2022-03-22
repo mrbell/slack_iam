@@ -17,7 +17,7 @@
     ],
     "events": [{
         "function": "iam.daily_update", 
-        "expressions": ["cron(0 14 ? * MON-FRI *)"] 
+        "expressions": ["cron(0 14 ? * MON-FRI *)", "cron(0 13 ? * MON-FRI *)"] 
     }],
     "keep_warm": true,
     "keep_warm_expression": "rate(5 minutes)",
