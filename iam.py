@@ -12,6 +12,7 @@ import logging
 import os
 import requests
 from datetime import datetime, timedelta
+from datetime import time as dt_time
 import math
 import parsedatetime as pdt
 from pytz import timezone
@@ -362,6 +363,12 @@ def iam():
 
 
 def daily_update():
+
+    eastern = timezone('US/Eastern')
+    utc = timezone('UTC')
+    eastern_time = utc.localize(datetime.utcnow()).astimezone(eastern).hour
+    if eastern_time < dt_time(8,50) or eastern_time.time() > dt_time(9,10):
+        return
 
     todays_statuses = get_todays_status()
     if len(todays_statuses) == 0:
