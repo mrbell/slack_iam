@@ -27,7 +27,7 @@ from flask import abort, Flask, jsonify, request
 Resources
 """
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 help_text = "Use this command to set or check your status."
 help_attachment_text = (
@@ -43,8 +43,8 @@ help_attachment_text = (
     "\t -`today` to see everyone's status for the current day, \n" + 
     "\t -`schedule` to check scheduled OOO or WFH status. \n" + 
     "\t  e.g. `/iam wfh tomorrow and friday`, `/iam ooo 4/13/2019`, or `/iam schedule` \n" +
-    "\t -'version' to check the version of the bot \n" +
-    "\t -'help' to get this help message"
+    "\t -`version` to check the version of the bot \n" +
+    "\t -`help` to get this help message"
 )
 
 # Various tokens that we will need
