@@ -27,6 +27,8 @@ from flask import abort, Flask, jsonify, request
 Resources
 """
 
+VERSION = '1.0.0'
+
 help_text = "Use this command to set or check your status."
 help_attachment_text = (
     "Use `/iam [subcommand]` with one of the following subcommands:\n"
@@ -40,7 +42,9 @@ help_attachment_text = (
     "\t -`history` to check your recent history, \n" +
     "\t -`today` to see everyone's status for the current day, \n" + 
     "\t -`schedule` to check scheduled OOO or WFH status. \n" + 
-    "e.g. `/iam wfh tomorrow and friday`, `/iam ooo 4/13/2019`, or `/iam schedule`"
+    "\t  e.g. `/iam wfh tomorrow and friday`, `/iam ooo 4/13/2019`, or `/iam schedule` \n" +
+    "\t -'version' to check the version of the bot \n" +
+    "\t -'help' to get this help message"
 )
 
 # Various tokens that we will need
@@ -352,6 +356,11 @@ def iam():
                 dict(text=past_statuses),
             ]
         )
+
+    elif subcommand == 'version':
+        return jsonify(
+            text=VERSION
+        )      
 
     else:
         return jsonify(
