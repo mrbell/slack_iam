@@ -27,7 +27,7 @@ from flask import abort, Flask, jsonify, request
 Resources
 """
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 
 help_text = "Use this command to set or check your status."
 help_attachment_text = (
