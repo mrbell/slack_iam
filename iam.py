@@ -375,8 +375,8 @@ def daily_update():
 
     eastern = timezone('US/Eastern')
     utc = timezone('UTC')
-    eastern_time = utc.localize(datetime.utcnow()).astimezone(eastern).time
-    if eastern_time < dt_time(8,50) or eastern_time.time() > dt_time(9,10):
+    eastern_time = utc.localize(datetime.utcnow()).astimezone(eastern).time()
+    if eastern_time < dt_time(8,50) or eastern_time > dt_time(9,10):
         return
 
     todays_statuses = get_todays_status()
